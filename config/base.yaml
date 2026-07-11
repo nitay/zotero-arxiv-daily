@@ -29,7 +29,8 @@ email:
 llm:
   api:
     key: ??? # API Key of your LLM API. Example: sk-xxx
-    base_url: ??? # API URL of your LLM API. Example: https://api.openai.com/v1
+    provider: null # A known OpenAI-compatible provider whose base_url is filled in automatically. One of: openai, anthropic (claude), siliconflow, deepseek, openrouter, together, groq. Leave null and set base_url for any other endpoint. Example: anthropic
+    base_url: null # API URL of your LLM API. Overrides provider when set. Required if provider is null. Example: https://api.openai.com/v1
   generation_kwargs:
   # Arguments for the LLM API. See [here](https://platform.openai.com/docs/api-reference/chat/create) for more details.
     max_tokens: 16384
@@ -45,7 +46,8 @@ reranker:
       prompt_name: document
   api:
     key: null # API Key of your embedding model API. Example: sk-xxx
-    base_url: null # API URL of your embedding model API. Example: https://api.openai.com/v1
+    provider: null # A known OpenAI-compatible provider whose base_url is filled in automatically (see llm.api.provider). Note: Anthropic has no embeddings endpoint, so use openai/siliconflow/etc. here. Example: openai
+    base_url: null # API URL of your embedding model API. Overrides provider when set. Example: https://api.openai.com/v1
     model: null # The model name of the embedding model. Example: text-embedding-3-large
     batch_size: null # The batch size for embedding API requests. Adjust to match your provider's limit. Example: 64
 

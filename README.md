@@ -65,8 +65,9 @@ Below are all the secrets you need to set. They are invisible to anyone includin
 | SENDER | The email account of the SMTP server that sends you email. | abc@qq.com |
 | SENDER_PASSWORD | The password of the sender account. Note that it's not necessarily the password for logging in the e-mail client, but the authentication code for SMTP service. Ask your email provider for this.   | abcdefghijklmn |
 | RECEIVER | The e-mail address that receives the paper list. | abc@outlook.com |
-| OPENAI_API_KEY | API Key when using the API to access LLMs. You can get FREE API for using advanced open source LLMs in [SiliconFlow](https://cloud.siliconflow.cn/i/b3XhBRAm). | sk-xxx |
-| OPENAI_API_BASE | API URL when using the API to access LLMs. | https://api.siliconflow.cn/v1 |
+| AI_API_KEY | API Key when using the API to access LLMs. You can get FREE API for using advanced open source LLMs in [SiliconFlow](https://cloud.siliconflow.cn/i/b3XhBRAm). (`OPENAI_API_KEY` is still accepted as a fallback.) | sk-xxx |
+| AI_PROVIDER | A known OpenAI-compatible provider whose API URL is filled in automatically: `openai`, `anthropic` (aka `claude`), `siliconflow`, `deepseek`, `openrouter`, `together`, `groq`. Set this instead of `AI_API_BASE`. | anthropic |
+| AI_API_BASE | API URL when using the API to access LLMs. Only needed for a provider not covered by `AI_PROVIDER`; overrides it when both are set. (`OPENAI_API_BASE` is still accepted as a fallback.) | https://api.siliconflow.cn/v1 |
 
 Then you should also set a public variable `CUSTOM_CONFIG` for your custom configuration.
 ![vars](./assets/repo_var.png)
@@ -87,8 +88,9 @@ email:
 
 llm:
   api:
-    key: ${oc.env:OPENAI_API_KEY}
-    base_url: ${oc.env:OPENAI_API_BASE}
+    key: ${oc.env:AI_API_KEY,${oc.env:OPENAI_API_KEY,null}}
+    provider: ${oc.env:AI_PROVIDER,null} # e.g. anthropic, openai, siliconflow
+    base_url: ${oc.env:AI_API_BASE,${oc.env:OPENAI_API_BASE,null}}
   generation_kwargs:
     model: gpt-4o-mini
 
@@ -131,7 +133,8 @@ email:
 llm:
   api:
     key: ??? # API Key of your LLM API. Example: sk-xxx
-    base_url: ??? # API URL of your LLM API. Example: https://api.openai.com/v1
+    provider: null # A known OpenAI-compatible provider whose base_url is filled in automatically. One of: openai, anthropic (claude), siliconflow, deepseek, openrouter, together, groq. Leave null and set base_url for any other endpoint. Example: anthropic
+    base_url: null # API URL of your LLM API. Overrides provider when set. Required if provider is null. Example: https://api.openai.com/v1
   generation_kwargs:
   # Arguments for the LLM API. See [here](https://platform.openai.com/docs/api-reference/chat/create) for more details.
     max_tokens: 16384
@@ -147,7 +150,8 @@ reranker:
       prompt_name: document
   api:
     key: null # API Key of your embedding model API. Example: sk-xxx
-    base_url: null # API URL of your embedding model API. Example: https://api.openai.com/v1
+    provider: null # A known OpenAI-compatible provider whose base_url is filled in automatically (see llm.api.provider). Note: Anthropic has no embeddings endpoint, so use openai/siliconflow/etc. here. Example: openai
+    base_url: null # API URL of your embedding model API. Overrides provider when set. Example: https://api.openai.com/v1
     model: null # The model name of the embedding model. Example: text-embedding-3-large
     batch_size: null # The batch size for embedding API requests. Adjust to match your provider's limit. Example: 64
 
