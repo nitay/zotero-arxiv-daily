@@ -12,8 +12,9 @@ email:
 
 llm:
   api:
-    key: ${oc.env:OPENAI_API_KEY}
-    base_url: ${oc.env:OPENAI_API_BASE}
+    key: ${oc.env:AI_API_KEY,${oc.env:OPENAI_API_KEY,null}}
+    provider: ${oc.env:AI_PROVIDER,null}
+    base_url: ${oc.env:AI_API_BASE,${oc.env:OPENAI_API_BASE,null}}
   generation_kwargs:
     model: gpt-4o-mini
 
