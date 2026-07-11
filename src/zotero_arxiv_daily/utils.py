@@ -3,6 +3,7 @@ import re
 import glob
 import math
 import smtplib
+import httpx
 from collections import Counter
 from email.header import Header
 from email.mime.text import MIMEText
@@ -169,3 +170,37 @@ def send_email(config:DictConfig, html:str):
     server.login(sender, password)
     server.sendmail(sender, [receiver], msg.as_string())
     server.quit()
+
+def send_email_resend(config:DictConfig, html:str):
+    api_key = config.email.resend.api_key
+    if not api_key:
+        raise ValueError(
+            "email.resend.api_key is not set. Provide a Resend API key "
+            "(https://resend.com/api-keys) to use provider 'resend'."
+        )
+    sender = config.email.resend.get("from")
+    if not sender:
+        raise ValueError(
+            "email.resend.from is not set. Provide a verified sender address, "
+            "or use onboarding@resend.dev for testing."
+        )
+    receiver = config.email.receiver
+    today = datetime.datetime.now().strftime('%Y/%m/%d')
+
+    resp = httpx.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "from": sender,
+            "to": [receiver],
+            "subject": f"Daily arXiv {today}",
+            "html": html,
+        },
+        timeout=30,
+    )
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Resend API error {resp.status_code}: {resp.text}")
+    logger.debug(f"Resend accepted email: {resp.json()}")

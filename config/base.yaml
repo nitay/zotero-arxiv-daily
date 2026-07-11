@@ -14,11 +14,17 @@ source:
     category: null # The categories of target medrxiv papers. Find categories from [here](https://www.medrxiv.org/) Example: ["psychiatry and clinical psychology", "neurology"]
 
 email:
-  sender: ??? # The email account of the SMTP server that sends you email. Example: abc@qq.com
+  provider: smtp # Delivery method: 'smtp' (send via an SMTP server) or 'resend' (send via the Resend HTTP API). Example: resend
   receiver: ??? # The email account that receives the paper list. Example: abc@outlook.com
+  # --- Required only when provider is 'smtp' ---
+  sender: ??? # The email account of the SMTP server that sends you email. Example: abc@qq.com
   smtp_server: ??? # The SMTP server that sends the email. Ask your email provider (Gmail, QQ, Outlook, ...) for its SMTP server. Example: smtp.qq.com
   smtp_port: ??? # The port of SMTP server. Example: 465
   sender_password: ??? # The password of the sender account. Note that it's not necessarily the password for logging in the e-mail client, but the authentication code for SMTP service. Ask your email provider for this. Example: abcdefghijklmn
+  # --- Required only when provider is 'resend' (https://resend.com) ---
+  resend:
+    api_key: null # Resend API key from https://resend.com/api-keys. Example: re_xxx
+    from: null # Verified sender address. Example: "arXiv Daily <daily@yourdomain.com>". For testing without a verified domain, use onboarding@resend.dev (only delivers to your own Resend account email).
 
 llm:
   api:
