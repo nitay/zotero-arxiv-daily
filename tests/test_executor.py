@@ -167,6 +167,7 @@ def test_run_end_to_end(config, monkeypatch):
         config.executor.source = ["arxiv"]
         config.executor.reranker = "api"
         config.executor.send_empty = False
+        config.email.provider = "smtp"  # exercise the SMTP stub, not the Resend HTTP path
 
     # 1. Stub pyzotero
     stub_zot = make_stub_zotero_client()
@@ -198,6 +199,9 @@ def test_run_end_to_end(config, monkeypatch):
 
     # 5. Stub sleep (reranker/retriever)
     monkeypatch.setattr("zotero_arxiv_daily.retriever.base.sleep", lambda _: None)
+
+    # 5b. Stub citation enrichment so the E2E test stays offline
+    monkeypatch.setattr("zotero_arxiv_daily.executor.enrich_papers", lambda papers, **kw: papers)
 
     # 6. Run
     executor = Executor(config)
@@ -257,6 +261,7 @@ def test_run_no_papers_send_empty_true(config, monkeypatch):
         config.executor.source = ["arxiv"]
         config.executor.reranker = "api"
         config.executor.send_empty = True
+        config.email.provider = "smtp"  # exercise the SMTP stub, not the Resend HTTP path
 
     stub_zot = make_stub_zotero_client()
     monkeypatch.setattr("zotero_arxiv_daily.executor.zotero.Zotero", lambda *a, **kw: stub_zot)

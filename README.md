@@ -161,6 +161,8 @@ executor:
   max_paper_num: 100 # The maximum number of the papers presented in the email. Example: 100
   source: ??? # The sources of papers to retrieve. Example: ['arxiv','biorxiv','medrxiv']
   reranker: local # The reranker to use. Example: 'local' or 'api'
+  enrich_citations: true # Fetch citation counts and top-author h-index from Semantic Scholar for arxiv papers (best-effort; failures are non-fatal). Example: false
+  semantic_scholar_api_key: null # Optional Semantic Scholar API key to raise rate limits. Leave null to use the free unauthenticated tier. Example: your-s2-key
 ```
 
 That's all! Now you can test the workflow by manually triggering it:

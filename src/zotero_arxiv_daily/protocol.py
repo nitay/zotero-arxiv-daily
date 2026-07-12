@@ -20,6 +20,8 @@ class Paper:
     tldr: Optional[str] = None
     affiliations: Optional[list[str]] = None
     score: Optional[float] = None
+    citation_count: Optional[int] = None
+    author_h_index: Optional[int] = None
 
     def _generate_tldr_with_llm(self, openai_client:OpenAI,llm_params:dict) -> str:
         lang = llm_params.get('language', 'English')
@@ -69,11 +71,15 @@ class Paper:
 
     def _generate_affiliations_with_llm(self, openai_client:OpenAI,llm_params:dict) -> Optional[list[str]]:
         if self.full_text is not None:
-            prompt = f"Given the beginning of a paper, extract the affiliations of the authors in a python list format, which is sorted by the author order. If there is no affiliation found, return an empty list '[]':\n\n{self.full_text}"
-            # use gpt-4o tokenizer for estimation
+            prompt = "Given the beginning of a paper, extract the affiliations of the authors in a python list format, which is sorted by the author order. If there is no affiliation found, return an empty list '[]'."
+            if self.authors:
+                prompt += f"\n\nThe authors of this paper are: {', '.join(self.authors)}."
+            prompt += f"\n\n{self.full_text}"
+            # use gpt-4o tokenizer for estimation. The author/affiliation block often
+            # sits past a long LaTeX preamble or PDF header, so keep a generous window.
             enc = tiktoken.encoding_for_model("gpt-4o")
             prompt_tokens = enc.encode(prompt)
-            prompt_tokens = prompt_tokens[:2000]  # truncate to 2000 tokens
+            prompt_tokens = prompt_tokens[:4000]  # truncate to 4000 tokens
             prompt = enc.decode(prompt_tokens)
             affiliations = openai_client.chat.completions.create(
                 messages=[
@@ -87,7 +93,9 @@ class Paper:
             )
             affiliations = affiliations.choices[0].message.content
 
-            affiliations = re.search(r'\[.*?\]', affiliations, flags=re.DOTALL).group(0)
+            # Greedily capture the outermost list so stray prose before/after the
+            # answer does not truncate a valid affiliation list.
+            affiliations = re.search(r'\[.*\]', affiliations, flags=re.DOTALL).group(0)
             affiliations = json.loads(affiliations)
             affiliations = list(set(affiliations))
             affiliations = [str(a) for a in affiliations]

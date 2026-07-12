@@ -110,6 +110,50 @@ def test_affiliations_malformed_llm_output(llm_params):
     assert result is None
 
 
+def test_affiliations_prompt_includes_author_names(llm_params):
+    """The affiliation prompt should carry author names to help alignment."""
+    from types import SimpleNamespace
+
+    captured = {}
+
+    def create_capturing(**kwargs):
+        captured["messages"] = kwargs.get("messages", [])
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='["MIT"]'))]
+        )
+
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create_capturing))
+    )
+    paper = make_sample_paper(authors=["Ada Lovelace", "Alan Turing"])
+    paper.generate_affiliations(client, llm_params)
+
+    user_msg = captured["messages"][-1]["content"]
+    assert "Ada Lovelace" in user_msg
+    assert "Alan Turing" in user_msg
+
+
+def test_affiliations_greedy_capture_with_trailing_prose(llm_params):
+    """A valid list followed by prose should still parse (greedy outer match)."""
+    from types import SimpleNamespace
+
+    def create_with_prose(**kwargs):
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content='["MIT", "Stanford"]\nThat is the full list.')
+                )
+            ]
+        )
+
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create_with_prose))
+    )
+    paper = make_sample_paper()
+    result = paper.generate_affiliations(client, llm_params)
+    assert set(result) == {"MIT", "Stanford"}
+
+
 def test_affiliations_error_returns_none(llm_params):
     from types import SimpleNamespace
 

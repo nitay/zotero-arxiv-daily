@@ -52,7 +52,16 @@ def get_empty_html():
   """
   return block_template
 
-def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affiliations:str=None):
+def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affiliations:str=None, metrics:str=None):
+    metrics_row = ""
+    if metrics:
+        metrics_row = """
+    <tr>
+        <td style="font-size: 14px; color: #333; padding: 8px 0;">
+            <strong>Impact:</strong> {metrics}
+        </td>
+    </tr>
+""".format(metrics=metrics)
     block_template = """
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-family: Arial, sans-serif; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
     <tr>
@@ -72,6 +81,7 @@ def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affi
             <strong>Relevance:</strong> {rate}
         </td>
     </tr>
+    {metrics_row}
     <tr>
         <td style="font-size: 14px; color: #333; padding: 8px 0;">
             <strong>TLDR:</strong> {tldr}
@@ -85,7 +95,7 @@ def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affi
     </tr>
 </table>
 """
-    return block_template.format(title=title, authors=authors,rate=rate, tldr=tldr, pdf_url=pdf_url, affiliations=affiliations)
+    return block_template.format(title=title, authors=authors,rate=rate, tldr=tldr, pdf_url=pdf_url, affiliations=affiliations, metrics_row=metrics_row)
 
 def get_stars(score:float):
     full_star = '<span class="full-star">⭐</span>'
@@ -102,6 +112,22 @@ def get_stars(score:float):
         full_star_num = int(star_num/2)
         half_star_num = star_num - full_star_num * 2
         return '<div class="star-wrapper">'+full_star * full_star_num + half_star * half_star_num + '</div>'
+
+
+def format_metrics(paper:Paper) -> str:
+    """Render the citation/prominence signals as a short human-readable string.
+
+    Returns an empty string when a paper carries no enrichment data (e.g. a
+    bioRxiv paper, or when Semantic Scholar had no record) so the email simply
+    omits the row rather than showing empty placeholders.
+    """
+    parts = []
+    if paper.citation_count is not None:
+        label = "citation" if paper.citation_count == 1 else "citations"
+        parts.append(f"{paper.citation_count} {label}")
+    if paper.author_h_index is not None:
+        parts.append(f"top author h-index {paper.author_h_index}")
+    return ' · '.join(parts)
 
 
 def render_email(papers:list[Paper]) -> str:
@@ -125,7 +151,8 @@ def render_email(papers:list[Paper]) -> str:
                 affiliations += ', ...'
         else:
             affiliations = 'Unknown Affiliation'
-        parts.append(get_block_html(p.title, authors, rate, p.tldr, p.pdf_url, affiliations))
+        metrics = format_metrics(p)
+        parts.append(get_block_html(p.title, authors, rate, p.tldr, p.pdf_url, affiliations, metrics))
 
     content = '<br>' + '</br><br>'.join(parts) + '</br>'
     return framework.replace('__CONTENT__', content)
