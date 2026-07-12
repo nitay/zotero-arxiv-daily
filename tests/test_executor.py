@@ -167,6 +167,7 @@ def test_run_end_to_end(config, monkeypatch):
         config.executor.source = ["arxiv"]
         config.executor.reranker = "api"
         config.executor.send_empty = False
+        config.email.provider = "smtp"  # exercise the SMTP stub, not the Resend HTTP path
 
     # 1. Stub pyzotero
     stub_zot = make_stub_zotero_client()
@@ -260,6 +261,7 @@ def test_run_no_papers_send_empty_true(config, monkeypatch):
         config.executor.source = ["arxiv"]
         config.executor.reranker = "api"
         config.executor.send_empty = True
+        config.email.provider = "smtp"  # exercise the SMTP stub, not the Resend HTTP path
 
     stub_zot = make_stub_zotero_client()
     monkeypatch.setattr("zotero_arxiv_daily.executor.zotero.Zotero", lambda *a, **kw: stub_zot)
