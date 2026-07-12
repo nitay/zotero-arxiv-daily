@@ -25,3 +25,4 @@ source:
 executor:
   debug: ${oc.env:DEBUG,null}
   source: ['arxiv']
+  semantic_scholar_api_key: ${oc.env:SEMANTIC_SCHOLAR_API_KEY,null}

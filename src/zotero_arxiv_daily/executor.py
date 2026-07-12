@@ -10,6 +10,7 @@ from .reranker import get_reranker_cls
 from .construct_email import render_email
 from .utils import send_email, send_email_resend
 from .providers import resolve_base_url
+from .enrichment import enrich_papers
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -117,6 +118,12 @@ class Executor:
             for p in tqdm(reranked_papers):
                 p.generate_tldr(self.openai_client, self.config.llm)
                 p.generate_affiliations(self.openai_client, self.config.llm)
+            if self.config.executor.get("enrich_citations", True):
+                logger.info("Enriching papers with citation metrics...")
+                enrich_papers(
+                    reranked_papers,
+                    api_key=self.config.executor.get("semantic_scholar_api_key"),
+                )
         elif not self.config.executor.send_empty:
             logger.info("No new papers found. No email will be sent.")
             return

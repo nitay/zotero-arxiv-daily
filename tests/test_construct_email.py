@@ -1,6 +1,6 @@
 """Tests for zotero_arxiv_daily.construct_email: render_email, get_stars, get_block_html."""
 
-from zotero_arxiv_daily.construct_email import render_email, get_stars, get_block_html, get_empty_html
+from zotero_arxiv_daily.construct_email import render_email, get_stars, get_block_html, get_empty_html, format_metrics
 from tests.canned_responses import make_sample_paper
 
 
@@ -76,3 +76,45 @@ def test_get_block_html_contains_all_fields():
 def test_get_empty_html():
     html = get_empty_html()
     assert "No Papers Today" in html
+
+
+# ---------------------------------------------------------------------------
+# format_metrics + citation/prominence rendering
+# ---------------------------------------------------------------------------
+
+
+def test_format_metrics_none_when_no_data():
+    paper = make_sample_paper()
+    assert format_metrics(paper) == ""
+
+
+def test_format_metrics_citations_and_hindex():
+    paper = make_sample_paper(citation_count=12, author_h_index=45)
+    metrics = format_metrics(paper)
+    assert "12 citations" in metrics
+    assert "h-index 45" in metrics
+
+
+def test_format_metrics_singular_citation():
+    paper = make_sample_paper(citation_count=1)
+    assert "1 citation" in format_metrics(paper)
+    assert "1 citations" not in format_metrics(paper)
+
+
+def test_format_metrics_zero_citations_still_shown():
+    paper = make_sample_paper(citation_count=0)
+    assert "0 citations" in format_metrics(paper)
+
+
+def test_render_email_includes_metrics():
+    paper = make_sample_paper(score=7.0, tldr="ok", citation_count=5, author_h_index=20)
+    html = render_email([paper])
+    assert "Impact:" in html
+    assert "5 citations" in html
+    assert "h-index 20" in html
+
+
+def test_render_email_omits_impact_row_without_metrics():
+    paper = make_sample_paper(score=7.0, tldr="ok")
+    html = render_email([paper])
+    assert "Impact:" not in html

@@ -199,6 +199,9 @@ def test_run_end_to_end(config, monkeypatch):
     # 5. Stub sleep (reranker/retriever)
     monkeypatch.setattr("zotero_arxiv_daily.retriever.base.sleep", lambda _: None)
 
+    # 5b. Stub citation enrichment so the E2E test stays offline
+    monkeypatch.setattr("zotero_arxiv_daily.executor.enrich_papers", lambda papers, **kw: papers)
+
     # 6. Run
     executor = Executor(config)
     executor.run()
